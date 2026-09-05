@@ -1,0 +1,7 @@
+service_name     = "lwa"
+environment      = "dev"
+application_name = "quotes-api"
+
+lwa_port              = 8080
+lwa_health_check_path = "/"
+lwa_image             = "123456789012.dkr.ecr.us-east-1.amazonaws.com/ecr-lwa-us-east-1-dev-quotes-api:v1"
