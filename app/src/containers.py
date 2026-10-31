@@ -1,8 +1,14 @@
 import boto3
 from dependency_injector import containers, providers
 
-from src.repository.quotes import DynamoQuotesRepository
-from src.service.quotes import QuotesService
+from src.repository.quotes import DynamoQuotesRepository, LocalQuotesRepository
+from src.service.quotes import QuotesRepository, QuotesService
+
+
+def create_quotes_repository(table_name: str | None) -> QuotesRepository:
+    if not table_name:
+        return LocalQuotesRepository()
+    return DynamoQuotesRepository(boto3.resource("dynamodb"), table_name)
 
 
 class Container(containers.DeclarativeContainer):
@@ -10,10 +16,8 @@ class Container(containers.DeclarativeContainer):
 
     config = providers.Configuration()
 
-    dynamodb = providers.Singleton(boto3.resource, service_name="dynamodb")
-    quotes_repository = providers.Factory(
-        DynamoQuotesRepository,
-        dynamodb=dynamodb,
+    quotes_repository = providers.Singleton(
+        create_quotes_repository,
         table_name=config.quotes_table_name,
     )
     quotes_service = providers.Factory(

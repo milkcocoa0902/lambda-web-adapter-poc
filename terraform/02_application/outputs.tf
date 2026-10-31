@@ -17,3 +17,8 @@ output "aws_region" {
   description = "AWS Region containing the DynamoDB quotes table."
   value       = data.aws_region.current.region
 }
+
+output "cloudfront_distribution_url" {
+  description = "CloudFront distribution url"
+  value = aws_cloudfront_distribution.lwa_cloudfront.domain_name
+}

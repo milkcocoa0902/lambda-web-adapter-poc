@@ -21,6 +21,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --locked --no-dev --no-install-project
 
 COPY src ./src
+COPY data ./data
 
 EXPOSE 8080
 

@@ -3,6 +3,7 @@ from unittest.mock import patch
 from dependency_injector import providers
 from fastapi.testclient import TestClient
 
+from src.containers import create_quotes_repository
 from src.main import app
 from src.repository.quotes import DynamoQuotesRepository
 from src.service.quotes import QuoteNotFoundError, QuotesRepository
@@ -28,6 +29,28 @@ def test_repository_can_be_overridden() -> None:
 
     with app.container.quotes_repository.override(test_repository):
         assert app.container.quotes_service().random() == "test quote"
+
+
+def test_local_endpoints_without_aws() -> None:
+    with (
+        patch("src.containers.boto3.resource", side_effect=AssertionError("AWS accessed")),
+        app.container.config.quotes_table_name.override(None),
+        app.container.reset_singletons(),
+        TestClient(app, backend_options={"use_uvloop": True}) as client,
+    ):
+        response = client.get("/quotes/random")
+        assert response.status_code == 200
+        assert response.json()["quote"]
+        assert client.get("/").status_code == 200
+        assert client.get("/docs").status_code == 200
+
+
+def test_configured_table_selects_dynamodb() -> None:
+    with patch("src.containers.boto3.resource") as resource:
+        repository = create_quotes_repository("quotes-table")
+    assert isinstance(repository, DynamoQuotesRepository)
+    resource.assert_called_once_with("dynamodb")
+    resource.return_value.Table.assert_called_once_with("quotes-table")
 
 
 def test_quote_endpoints() -> None:

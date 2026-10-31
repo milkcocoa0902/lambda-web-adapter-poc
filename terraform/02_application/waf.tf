@@ -7,12 +7,27 @@ resource "aws_wafv2_web_acl" "lwa_waf" {
     allow {}
   }
 
+  custom_response_body {
+    key          = "rate_limit"
+    content_type = "APPLICATION_JSON"
+    content      = jsonencode({ detail = "rate limit exceeded" })
+  }
+
   rule {
     name     = "RateLimitAllRequests"
     priority = 0
 
     action {
-      block {}
+      block {
+        custom_response {
+          response_code            = 429
+          custom_response_body_key = "rate_limit"
+          response_header {
+            name  = "Retry-After"
+            value = "300"
+          }
+        }
+      }
     }
 
     statement {

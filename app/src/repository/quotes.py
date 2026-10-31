@@ -1,7 +1,18 @@
+import json
 import random
+from pathlib import Path
 from typing import Any
 
 from src.service.quotes import QuoteNotFoundError, QuotesRepository
+
+
+class LocalQuotesRepository(QuotesRepository):
+    def __init__(self):
+        path = Path(__file__).resolve().parents[2] / "data" / "quotes.json"
+        self.quotes = json.loads(path.read_text(encoding="utf-8"))
+
+    def random(self) -> str:
+        return random.choice(self.quotes)["quote"]
 
 
 class DynamoQuotesRepository(QuotesRepository):
